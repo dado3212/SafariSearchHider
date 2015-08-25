@@ -1,0 +1,10 @@
+{
+    entry = {
+	bundle = SafariSearchHider;
+	cell = PSLinkCell;
+	detail = SafariSearchHiderListController;
+	icon = icon.png;
+	isController = 1;
+	label = SafariSearchHider;
+    };
+}

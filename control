@@ -1,0 +1,11 @@
+Package: com.hackingdartmouth.safarisearchhider
+Name: SafariSearchHider
+Depends: mobilesubstrate
+Version: 1.0.0
+Architecture: iphoneos-arm
+Description: Hides certain searches from your history in Safari.
+Maintainer: Alex Beals <Alex.Beals.18@dartmouth.edu>
+Author: Alex Beals <Alex.Beals.18@dartmouth.edu>
+Section: Tweaks
+Depiction: http://cydia.alexbeals.com/SafariSearchHider
+Icon: file:///Library/PreferenceBundles/SafariSearchHider.bundle/icon@2x.png
