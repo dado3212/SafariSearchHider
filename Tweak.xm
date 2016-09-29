@@ -4,6 +4,15 @@ NSString *prefPath = @"/var/mobile/Library/Preferences/com.hackingdartmouth.safa
 
 @interface WBSHistory : NSObject
 -(id)itemVisitedAtURLString:(id)arg1 title:(id)arg2 timeOfVisit:(double)arg3 wasHTTPNonGet:(BOOL)arg4 wasFailure:(BOOL)arg5 increaseVisitCount:(BOOL)arg6 origin:(int)arg7;
+-(id)_removeItemForURLString:(id)arg1 ;
+@end
+
+@interface WBSHistoryVisit : NSObject
+-(id)item;
+@end
+
+@interface WBSHistoryItem : NSObject
+-(id)urlString;
 @end
 
 static BOOL doesMatch(NSString *url, NSArray *regexes) {
@@ -19,7 +28,7 @@ static BOOL doesMatch(NSString *url, NSArray *regexes) {
 				regex = regexArray[2];
 			}
 
-			NSRegularExpression* test = [NSRegularExpression regularExpressionWithPattern:regex options:0 error:&error];
+			NSRegularExpression* test = [NSRegularExpression regularExpressionWithPattern:regex options:NSRegularExpressionCaseInsensitive error:&error];
 
 			if (error == nil) {
 				NSUInteger numberOfMatches = [test numberOfMatchesInString:url options:0 range:NSMakeRange(0, [url length])];
@@ -34,10 +43,21 @@ static BOOL doesMatch(NSString *url, NSArray *regexes) {
 }
 
 %hook WBSHistory
+	// Match based on URL
 	- (id)itemVisitedAtURLString:(id)arg1 title:(id)arg2 timeOfVisit:(double)arg3 wasHTTPNonGet:(BOOL)arg4 wasFailure:(BOOL)arg5 increaseVisitCount:(BOOL)arg6 origin:(int)arg7 {
 		NSArray *regexes = [[NSArray alloc] initWithContentsOfFile:prefPath];
 		if (doesMatch(arg1, regexes))
 			return nil;
+		else
+			return %orig;
+	}
+
+	// Match based on title
+	-(void)updateTitle:(id)arg1 forVisit:(id)arg2 {
+		NSString *url = [(WBSHistoryItem*)[(WBSHistoryVisit*)arg2 item] urlString];
+		NSArray *regexes = [[NSArray alloc] initWithContentsOfFile:prefPath];
+		if (doesMatch(url, regexes))
+			[self _removeItemForURLString:url];
 		else
 			return %orig;
 	}
