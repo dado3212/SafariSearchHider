@@ -7,6 +7,10 @@ not be saved in Safari search history.
 
 To install it, either install from the .deb, or add the repository http://cydia.alexbeals.com to Cydia and download SafariSearchHider.
 
+### Modification
+
+To start modifying it, simply copy the full folder in, and then symlink folders called 'theos' to $(THEOS) in both the preferences folder and the main folder.  You can create and install the tweak using 'make package install'.
+
 ---
 
 <ul>
