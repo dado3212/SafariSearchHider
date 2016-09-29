@@ -1,4 +1,4 @@
-# SafariSearchHider
+# <img src="/safarisearchhider/Resources/icon@2x.png?raw=true" width="30" alt="Logo"/> SafariSearchHider
 
 SafariSearchHider is a Cydia tweak that adds the options to create regex or wildcard strings that will 
 not be saved in Safari search history.
