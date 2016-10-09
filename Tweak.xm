@@ -42,6 +42,26 @@ static BOOL doesMatch(NSString *url, NSArray *regexes) {
 	return NO;
 }
 
+// Handles removing search suggestions
+%hook WBSRecentWebSearchesController
+	-(id)recentSearchesMatchingPrefix:(id)arg1 {
+		id recentSearches = %orig;
+
+		NSArray *regexes = [[NSArray alloc] initWithContentsOfFile:prefPath];
+		NSMutableArray *modifiedSearches = [[NSMutableArray alloc] init];
+
+		for (int i = 0; i < [recentSearches count]; i++) {
+			NSString *string = recentSearches[i];
+			
+			if (!doesMatch(string, regexes)) {
+				[modifiedSearches addObject:string];
+			}
+		}
+
+		return modifiedSearches;
+	}
+%end
+
 %hook WBSHistory
 	// Match based on URL
 	- (id)itemVisitedAtURLString:(id)arg1 title:(id)arg2 timeOfVisit:(double)arg3 wasHTTPNonGet:(BOOL)arg4 wasFailure:(BOOL)arg5 increaseVisitCount:(BOOL)arg6 origin:(int)arg7 {
