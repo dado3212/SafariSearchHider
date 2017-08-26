@@ -30,42 +30,42 @@ BOOL authenticated = NO;
 
 @implementation SafariSearchHiderListController
 
--(void)alertView:(UIAlertView *)alert didDismissWithButtonIndex:(NSInteger)buttonIndex {
+- (void) alertView:(UIAlertView *) alert didDismissWithButtonIndex:(NSInteger)buttonIndex {
 	NSMutableArray *regexes = [[NSMutableArray alloc] initWithContentsOfFile:prefPath];
-	if (alert == passwordAlert) {
-		if (buttonIndex == 1) {
-			if ([passwordField.text isEqualToString:regexes[0][1]]) {
-				authenticated = YES;
-				[self viewDidLoad];
-				[self reloadSpecifiers];
-			} else {
-				UIAlertView *errorAlert = [[UIAlertView alloc]
-                                       initWithTitle:@"Authentication Failed" message:@"Incorrect Password."
-                                       delegate:self
-                                       cancelButtonTitle:@"OK"
-                                       otherButtonTitles:nil];
-            
-				[errorAlert show];
-			}
-		} else
-			[[self parentController] popToRoot];
-	} else
+	if (alert == passwordAlert && buttonIndex == 1) {
+		if ([passwordField.text isEqualToString:regexes[0][1]]) {
+			authenticated = YES;
+			[self viewDidLoad];
+			[self reloadSpecifiers];
+		} else {
+			UIAlertView *errorAlert = [[UIAlertView alloc]
+                                 initWithTitle:@"Authentication Failed" message:@"Incorrect Password."
+                                 delegate:self
+                                 cancelButtonTitle:@"OK"
+                                 otherButtonTitles:nil];
+          
+			[errorAlert show];
+		}
+	} else {
 		[[self parentController] popToRoot];
+	}
 }
 
 - (BOOL)tableView:(UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)indexPath {
-	if (indexPath.section != 0)
-		return NO;
-	else
-   		return [super tableView:tableView canEditRowAtIndexPath:indexPath];
+	return indexPath.section != 0
+		? NO
+		: [super tableView:tableView canEditRowAtIndexPath:indexPath];
 }
 
 - (void)viewDidLoad {
 	NSMutableArray *regexes = [[NSMutableArray alloc] initWithContentsOfFile:prefPath];
-	if (regexes == nil)
+	if (regexes == nil) {
 		regexes = [[NSMutableArray alloc] init];
-	if ([regexes count] == 0 || ([regexes[0] count] != 2))
+	}
+	// Add password field to "regexes"
+	if ([regexes count] == 0 || ([regexes[0] count] != 2)) {
 		[regexes insertObject:@[@NO, @""] atIndex:0];
+	}
 	[regexes writeToFile:prefPath atomically:YES];
 
 	if (authenticated || ![regexes[0][0] boolValue]) {
@@ -97,7 +97,7 @@ BOOL authenticated = NO;
 }
 
 -(id)specifiers {
-	if(_specifiers == nil) {
+	if (_specifiers == nil) {
 		NSMutableArray *specs = [NSMutableArray array];
 
 		if (authenticated) {
@@ -114,12 +114,12 @@ BOOL authenticated = NO;
 
 			for (int i = 1; i < [regexes count]; i++) {
 				PSSpecifier* tempSpec = [PSSpecifier preferenceSpecifierNamed:regexes[i][2]
-													  target:self
-														 set:NULL
-														 get:NULL
-													  detail:NSClassFromString(@"SafariSearchHiderRegex")
-														cell:PSLinkCell
-														edit:Nil];
+													       target:self
+														        set:NULL
+														        get:NULL
+													       detail:NSClassFromString(@"SafariSearchHiderRegex")
+														       cell:PSLinkCell
+														       edit:Nil];
 				[tempSpec setProperty:@(i) forKey:@"arrayIndex"];
 				[tempSpec setProperty:NSStringFromSelector(@selector(deleteRegex:)) forKey:PSDeletionActionKey];
 				[specs addObject:tempSpec];
@@ -127,66 +127,67 @@ BOOL authenticated = NO;
 
 			//initialize add button
 			PSSpecifier* button = [PSSpecifier preferenceSpecifierNamed:@""
-				target:self
-				set:NULL
-				get:NULL
-				detail:Nil
-				cell:PSButtonCell
-				edit:Nil];
+														 target:self
+																set:NULL
+																get:NULL
+														 detail:Nil
+														   cell:PSButtonCell
+														   edit:Nil];
 			[button setButtonAction:@selector(addRegex)];
 			[button setProperty:[AddCell class] forKey:@"cellClass"];
-			//[button setProperty:[UIImage imageWithContentsOfFile:@"/Library/PreferenceBundles/SafariSearchHider.bundle/add.png"] forKey:@"iconImage"];
 			[specs addObject:button];
 
 			//initialize password protect
 			group = [PSSpecifier preferenceSpecifierNamed:@"Security"
-				target:self
-				set:NULL
-				get:NULL
-				detail:Nil
-				cell:PSGroupCell
-				edit:Nil];
+							 target:self
+							    set:NULL
+							    get:NULL
+							 detail:Nil
+							   cell:PSGroupCell
+							   edit:Nil];
 			[specs addObject:group];
 
 			PSSpecifier *spec = [PSSpecifier preferenceSpecifierNamed:@"Passcode Enabled"
-												  target:self
-													 set:@selector(setPreferenceValue:specifier:)
-													 get:@selector(readPreferenceValue:)
-												  detail:Nil
-													cell:PSSwitchCell
-													edit:Nil];
+												   target:self
+													    set:@selector(setPreferenceValue:specifier:)
+													    get:@selector(readPreferenceValue:)
+												   detail:Nil
+													   cell:PSSwitchCell
+													   edit:Nil];
 			[specs addObject:spec];
 
 			PSTextFieldSpecifier *textSpec = [PSTextFieldSpecifier preferenceSpecifierNamed:@""
-																					  target:self
-																						 set:@selector(setPreferenceValue:specifier:)
-																						get:@selector(readPreferenceValue:)
-																					 detail:Nil
-																					   cell:PSSecureEditTextCell
-																					   edit:nil];
+																			  target:self
+																					 set:@selector(setPreferenceValue:specifier:)
+																					 get:@selector(readPreferenceValue:)
+																				detail:Nil
+																					cell:PSSecureEditTextCell
+																					edit:nil];
 			[textSpec setPlaceholder:@"Enter passcode"];
 			[textSpec setProperty:@"passcode" forKey:@"key"];
-			[textSpec setKeyboardType:UIKeyboardTypeDecimalPad autoCaps:UITextAutocapitalizationTypeNone autoCorrection:UITextAutocorrectionTypeNo];
+			[textSpec setKeyboardType:UIKeyboardTypeDecimalPad
+											 autoCaps:UITextAutocapitalizationTypeNone
+								 autoCorrection:UITextAutocorrectionTypeNo];
 
 			[specs addObject:textSpec];
 
 			//initialize about
 			group = [PSSpecifier preferenceSpecifierNamed:@"About"
-				target:self
-				set:NULL
-				get:NULL
-				detail:Nil
-				cell:PSGroupCell
-				edit:Nil];
+				       target:self
+							    set:NULL
+									get:NULL
+							 detail:Nil
+								 cell:PSGroupCell
+								 edit:Nil];
 			[specs addObject:group];
 
 			button = [PSSpecifier preferenceSpecifierNamed:@"Donate to Developer"
-				target:self
-				set:NULL
-				get:NULL
-				detail:Nil
-				cell:PSButtonCell
-				edit:Nil];
+								target:self
+									 set:NULL
+									 get:NULL
+								detail:Nil
+									cell:PSButtonCell
+									edit:Nil];
 			[button setButtonAction:@selector(donate)];
 			[button setProperty:[UIImage imageWithContentsOfFile:@"/Library/PreferenceBundles/SafariSearchHider.bundle/paypal.png"] forKey:@"iconImage"];
 			[specs addObject:button];
@@ -213,11 +214,15 @@ BOOL authenticated = NO;
 			[button setProperty:[UIImage imageWithContentsOfFile:@"/Library/PreferenceBundles/SafariSearchHider.bundle/mail.png"] forKey:@"iconImage"];
 			[specs addObject:button];
 
+			// Get the current year
+	    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+	    [formatter setDateFormat:@"yyyy"];
+	    NSString *yearString = [formatter stringFromDate:[NSDate date]];
+
 			group = [PSSpecifier emptyGroupSpecifier];
-			[group setProperty:@"© 2015 Alex Beals" forKey:@"footerText"];
+	    [group setProperty:[NSString stringWithFormat: @"© 2015-%@ Alex Beals", yearString] forKey:@"footerText"];
 			[group setProperty:@(1) forKey:@"footerAlignment"];
 			[specs addObject:group];
-
 		}
 
 		_specifiers = [[NSArray arrayWithArray:specs] retain];
@@ -229,6 +234,8 @@ BOOL authenticated = NO;
 	NSMutableArray *regexes = [[NSMutableArray alloc] initWithContentsOfFile:prefPath];
 	[regexes removeObjectAtIndex:([_specifiers indexOfObject:specifier])];
 	[regexes writeToFile:prefPath atomically:YES];
+
+	[self reloadSpecifiers];
 }
 
 - (void)addRegex {
@@ -269,7 +276,7 @@ BOOL authenticated = NO;
 }
 
 - (void)donate {
-	[[UIApplication sharedApplication] openURL:[NSURL URLWithString:@"https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=GA2FFF2GUMMQ2&lc=US&item_name=Alex%20Beals&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donate_SM%2egif%3aNonHosted"]];
+	[[UIApplication sharedApplication] openURL:[NSURL URLWithString:@"https://www.paypal.me/AlexBeals/5"]];
 }
 
 - (void)email {
@@ -314,40 +321,40 @@ BOOL authenticated = NO;
 	if (_specifiers == nil) {
 		NSMutableArray *specs = [NSMutableArray array];
 		PSSpecifier *spec = [PSSpecifier preferenceSpecifierNamed:@"Enabled"
-											  target:self
-												 set:@selector(setPreferenceValue:specifier:)
-												 get:@selector(readPreferenceValue:)
-											  detail:Nil
-												cell:PSSwitchCell
-												edit:Nil];
+											   target:self
+												    set:@selector(setPreferenceValue:specifier:)
+												    get:@selector(readPreferenceValue:)
+											   detail:Nil
+												   cell:PSSwitchCell
+												   edit:Nil];
 		[specs addObject:spec];
 
 		PSSpecifier* group = [PSSpecifier preferenceSpecifierNamed:@"Regex"
-			target:self
-			set:NULL
-			get:NULL
-			detail:Nil
-			cell:PSGroupCell
-			edit:Nil];
+													target:self
+														 set:NULL
+														 get:NULL
+													detail:Nil
+													  cell:PSGroupCell
+													  edit:Nil];
 		[specs addObject:group];
 		
 		spec = [PSSpecifier preferenceSpecifierNamed:@"Segment"
-											  target:self
-												 set:@selector(setPreferenceValue:specifier:)
-												 get:@selector(readPreferenceValue:)
-											  detail:Nil
-												cell:PSSegmentCell
-												edit:Nil];
+						target:self
+						   set:@selector(setPreferenceValue:specifier:)
+						   get:@selector(readPreferenceValue:)
+					  detail:Nil
+						  cell:PSSegmentCell
+						  edit:Nil];
 		[spec setValues:@[@YES, @NO] titles:@[@"Wildcard", @"Regex"]];
 		[specs addObject:spec];
 
 		 PSTextFieldSpecifier *textSpec = [PSTextFieldSpecifier preferenceSpecifierNamed:@""
-																				  target:self
-																					 set:@selector(setPreferenceValue:specifier:)
+																			 target:self
+																				  set:@selector(setPreferenceValue:specifier:)
 																					get:@selector(readPreferenceValue:)
-																				 detail:Nil
-																				   cell:PSEditTextCell
-																				   edit:nil];
+																			 detail:Nil
+																				 cell:PSEditTextCell
+																				 edit:nil];
 		[textSpec setPlaceholder:@"Enter a string to match"];
 		[textSpec setProperty:@"regex" forKey:@"key"];
 		[textSpec setKeyboardType:UIKeyboardTypeDefault autoCaps:UITextAutocapitalizationTypeNone autoCorrection:UITextAutocorrectionTypeNo];
