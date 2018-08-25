@@ -7,6 +7,11 @@ NSString *prefPath = @"/var/mobile/Library/Preferences/com.hackingdartmouth.safa
 -(id)_removeItemForURLString:(id)arg1 ;
 @end
 
+@interface WBSBookmarkAndHistoryCompletionMatch: NSObject
+-(id)originalURLString;
+-(id)title;
+@end
+
 @interface WBSHistoryVisit : NSObject
 -(id)item;
 @end
@@ -16,6 +21,9 @@ NSString *prefPath = @"/var/mobile/Library/Preferences/com.hackingdartmouth.safa
 @end
 
 static BOOL doesMatch(NSString *url, NSArray *regexes) {
+	if (url == nil || ![url length]) {
+		return NO;
+	}
 	for (NSArray *regexArray in regexes) {
 		NSError *error = nil;
 		if ([regexArray count] == 3 && [regexArray[0] boolValue]) {
@@ -42,24 +50,38 @@ static BOOL doesMatch(NSString *url, NSArray *regexes) {
 	return NO;
 }
 
-// Handles removing search suggestions
-%hook WBSRecentWebSearchesController
-	-(id)recentSearchesMatchingPrefix:(id)arg1 {
-		id recentSearches = %orig;
+%hook WBSURLCompletionDatabase
+-(void)getBestMatchesForTypedString:(id)arg1 topHits:(id*)tH matches:(id*)m limit:(unsigned long long)arg4 {
+	// Request twice as many to try and get enough that aren't dirty
+	%orig(arg1, tH, m, arg4 * 2);
+	NSArray *regexes = [[NSArray alloc] initWithContentsOfFile:prefPath];
 
-		NSArray *regexes = [[NSArray alloc] initWithContentsOfFile:prefPath];
-		NSMutableArray *modifiedSearches = [[NSMutableArray alloc] init];
-
-		for (int i = 0; i < [recentSearches count]; i++) {
-			NSString *string = recentSearches[i];
-			
-			if (!doesMatch(string, regexes)) {
-				[modifiedSearches addObject:string];
-			}
+	// Examine matches
+	NSMutableArray *modifiedMatches = [[NSMutableArray alloc] init];
+	id matches = *m;
+	for (int i = 0; i < [matches count]; i++) {
+		id match = matches[i];
+		
+		if (!doesMatch([match originalURLString], regexes) && !doesMatch([match title], regexes)) {
+			[modifiedMatches addObject:match];
 		}
-
-		return modifiedSearches;
 	}
+	*m = modifiedMatches;
+
+	// Examine top hits
+	NSMutableArray *modifiedTopHits = [[NSMutableArray alloc] init];
+	id topHits = *tH;
+	for (int i = 0; i < [topHits count]; i++) {
+		id match = topHits[i];
+		
+		if (!doesMatch([match originalURLString], regexes) && !doesMatch([match title], regexes)) {
+			[modifiedTopHits addObject:match];
+		}
+	}
+	*tH = modifiedTopHits;
+
+	return;
+}
 %end
 
 %hook WBSHistory
