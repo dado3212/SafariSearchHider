@@ -1,4 +1,16 @@
-ARCHS = armv7 arm64 arm64e
+# Dropped armv7 for 10.3 SDK :/
+ARCHS = arm64 arm64e
+
+# SDKVERSION = 10.2
+# SYSROOT = theos/sdks/iPhoneOS10.2.sdk
+
+# Different version because my build env is messed up
+TARGET=iphone:10.3
+
+FINALPACKAGE = 1
+# Uncomment this for NSLogs (maybe)
+# FINALPACKAGE = 0
+# DEBUG = 1
 
 include theos/makefiles/common.mk
 
